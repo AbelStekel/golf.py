@@ -4,7 +4,6 @@ import time
 #DO NOT TOUCH
 window_x = 1000
 window_y = 800
-#(PLAYING FIELD IS A 900X700 RECTANGLE. OUTER BORDER 100X100 IS KEPT EMPTY)
 
 #define colors
 black = pygame.Color(0, 0, 0)
@@ -52,7 +51,7 @@ def game():
 	ball_inertia = 0
 	par = 0
 	taken_swings = 0
-	swings_list = ["this", "list", "needs", "n+1 entries", "where", "n=totallevels"]
+	swings_list = ["this", "list", "needs", "n+1 entries", "where", "n=totallevels", "a", "b", "c", "lorem", "ipsum"]
 	#main game loop
 	while (1):
 		#get inputs
@@ -60,7 +59,7 @@ def game():
 			if event.type == pygame.QUIT:  
 				pygame.quit()
 				quit()
-			elif event.type == pygame.MOUSEBUTTONDOWN:
+			if event.type == pygame.MOUSEBUTTONDOWN:
 				#left mouse button
 				if event.button == 1 and ball_inertia <= 0:
 					swing_result = take_swing(ball[0], ball[1])
@@ -69,6 +68,11 @@ def game():
 					ball_inertia = 123 * swing_result[1]
 					#swing_result0 is direction
 					direction = swing_result[0]
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_m:
+					level_completed = True
+					level_number += 1
+					ball_inertia = 0
 
 		#handle movement of ball
 		if ball_inertia > 0:
@@ -133,6 +137,7 @@ def game():
 					direction = 4
 					ball_inertia *= 0.75
 
+				#southwest
 				elif direction == 6:
 					#case: tile left is wall. below clear. bounce down and to right
 					if check_next_tile(ball[0], ball[1], 4) == black and check_next_tile(ball[0], ball[1], 7) == green:
@@ -159,6 +164,7 @@ def game():
 					direction = 2
 					ball_inertia *= 0.75
 
+				#southeast
 				elif direction == 8:
 					#case: tile right is wall. below clear. bounce down and to rleft
 					if check_next_tile(ball[0], ball[1], 5) == black and check_next_tile(ball[0], ball[1], 7) == green:
@@ -211,6 +217,16 @@ def game():
 					ball[0] += 0.8
 					ball[1] += 0.8
 
+			elif check_next_tile(ball[0], ball[1], direction) == red:
+				#track scores
+				swings_list[level_number] = taken_swings
+				#increment level
+				level_number += 1
+				#set this flag so we can do other things next loop
+				level_completed = True
+				#stop movement of ball
+				ball_inertia = 0
+
 			else:
 				#northwest
 				if direction == 1:
@@ -260,27 +276,16 @@ def game():
 
 		#if legal hole nr -> draw ball, walls and hole
 		#change this if adding new level
-		if level_number <= 4:
-			if -15 < (ball[0] - hole[0]) < 15 and -15 < (ball[1] - hole[1]) < 15:
-				#track scores
-				swings_list[level_number] = taken_swings
-				#increment level
-				level_number += 1
-				#set this flag so we can do other things next loop
-				level_completed = True
-				#stop movement of ball
-				ball_inertia = 0
-
+		if level_number <= 10:
 			#draw obstacles
 			draw_walls(level_number)
 			#draw ball
-			pygame.draw.rect(game_window, white, pygame.Rect(int(ball[0]), int(ball[1]), 10, 10))
+			pygame.draw.rect(game_window, white, pygame.Rect(int(ball[0]) - 5, int(ball[1]) - 5, 10, 10))
 			#draw hole
 			pygame.draw.rect(game_window, red, pygame.Rect(hole[0] - 15, hole[1] - 15, 30, 30))
 
-		#on game end (update number "2" to represent actual level count)
 		#change this if adding new level
-		elif level_number > 4:
+		elif level_number > 10:
 			i = 1
 			while i != level_number: 
 				game_text = smallfont.render("Hole " + str(i) + ": Player took " + str(swings_list[i]) + " swings." , True, red)
@@ -288,7 +293,7 @@ def game():
 				game_surface.midtop = (250, 200 + i * 30)
 				game_window.blit(game_text, game_surface)
 				#hole in one
-				if swings_list[i - 1] == 1:
+				if swings_list[i] == 1:
 					extra_text = smallfont.render("HOLE IN ONE!!!!" , True, red)
 					extra_surface = extra_text.get_rect()
 					extra_surface.midtop = (450, 200 + i * 30)
@@ -337,7 +342,7 @@ def game():
 		pygame.draw.rect(game_window, black, pygame.Rect(0, window_y - 75, window_x, 75))
 		pygame.draw.rect(game_window, black, pygame.Rect(window_x - 75, 0, 75, window_y))
 
-		# #seriously useful debug stuff 
+		#seriously useful debug stuff 
 		# def debug_info(ball, swing_result, ball_inertia):
 		# 	clicked_text = smallfont.render("ball_x: " + str(ball[0]) + " ball_y: " + str(ball[1]), True, red)
 		# 	clicked_text_2 = smallfont.render("power level: " + str(swing_result[1]) + " direction: " + str(swing_result[0]), True, red)
@@ -362,15 +367,15 @@ def game():
 		hole_surface.midtop = (150, 15)
 		game_window.blit(hole_text, hole_surface)
 
-		par_text = smallfont.render("Par for this hole is " + str(par) + " swings.", True, red)
-		par_surface = par_text.get_rect()
-		par_surface.midtop = (150, 45)
-		game_window.blit(par_text, par_surface)
-
 		shot_text = smallfont.render("Player took " + str(taken_swings) + " swings.", True, red)
 		shot_surface = shot_text.get_rect()
 		shot_surface.midtop = (150, 30)
 		game_window.blit(shot_text, shot_surface)
+
+		par_text = smallfont.render("Par for this hole is " + str(par) + " swings.", True, red)
+		par_surface = par_text.get_rect()
+		par_surface.midtop = (150, 45)
+		game_window.blit(par_text, par_surface)
 
 		fps.tick(24)
 		pygame.display.flip()
@@ -385,7 +390,24 @@ def take_swing(x_coord, y_coord):
 	clicked = 0
 
 	while (1):
-		time.sleep(.3)
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:  
+				pygame.quit()
+				quit()
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				#left mouse button
+				if event.button == 1:
+					if clicked == 0:
+						clicked += 1
+						return_value[0] = current_direction
+					elif clicked == 1:
+						return_value[1] = current_power
+						return return_value
+				#right mouse button cancels an input
+				if event.button == 2:
+					if clicked == 1:
+						clicked -= 1
+
 		current_direction = iterate_direction(current_direction)
 		current_power = iterate_power(current_power)
 
@@ -393,44 +415,36 @@ def take_swing(x_coord, y_coord):
 		if clicked == 0:
 			#top left (diagonal)
 			if current_direction == 1:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 20, y_coord + 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 20, y_coord - 20, 10, 10))
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 15, y_coord + 15, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 25, y_coord - 25, 10, 10))
 			#top mid (up)
-			if current_direction == 2:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 20, y_coord - 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord, y_coord - 20, 10, 10))
+			elif current_direction == 2:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 25, y_coord - 25, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 5, y_coord - 25, 10, 10))
 			#top right diagonal
-			if current_direction == 3:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord, y_coord - 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 20, y_coord - 20, 10, 10))
+			elif current_direction == 3:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 5, y_coord - 25, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 15, y_coord - 25, 10, 10))
 			#left
-			if current_direction == 4:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 20, y_coord - 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 20, y_coord, 10, 10))
+			elif current_direction == 4:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 15, y_coord - 25, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 25, y_coord - 5, 10, 10))
 			#right
-			if current_direction == 5:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 20, y_coord, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 20, y_coord, 10, 10))
+			elif current_direction == 5:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 25, y_coord - 5, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 15, y_coord - 5, 10, 10))
 			#bottom left (diagonal)
-			if current_direction == 6:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 20, y_coord, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 20, y_coord + 20, 10, 10))
+			elif current_direction == 6:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord + 15, y_coord - 5, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 25, y_coord + 15, 10, 10))
 			#bottom mid (down)
-			if current_direction == 7:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 20, y_coord + 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord, y_coord + 20, 10, 10))
+			elif current_direction == 7:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 25, y_coord + 15, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord - 5, y_coord + 15, 10, 10))
 			#bottom right diagonal
-			if current_direction == 8:
-				pygame.draw.rect(game_window, green, pygame.Rect(x_coord, y_coord + 20, 10, 10))
-				pygame.draw.rect(game_window, white, pygame.Rect(x_coord, y_coord, 10, 10))
-				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 20, y_coord + 20, 10, 10))
+			elif current_direction == 8:
+				pygame.draw.rect(game_window, green, pygame.Rect(x_coord - 5, y_coord + 15, 10, 10))
+				pygame.draw.rect(game_window, grey, pygame.Rect(x_coord + 15, y_coord + 15, 10, 10))
 
 		#draw power level
 		elif clicked == 1:
@@ -449,23 +463,8 @@ def take_swing(x_coord, y_coord):
 			elif current_power == 5:
 				pygame.draw.rect(game_window, red, pygame.Rect(150, window_y - 50, 125, 25))
 
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:  
-				pygame.quit()
-				quit()
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				#left mouse button
-				if event.button == 1:
-					if clicked == 0:
-						clicked += 1
-						return_value[0] = current_direction
-					elif clicked == 1:
-						return_value[1] = current_power
-						return return_value
-				#right mouse button cancels an input
-				if event.button == 2:
-					if clicked == 1:
-						clicked -= 1
+		#comment this out for funny
+		time.sleep(.333)
 		pygame.display.flip()		
 
 #helper function that iterates on the power level
@@ -478,12 +477,12 @@ def iterate_power(power):
 		power = 1
 	return power
 
-#helper funciton that iterates on the direction
+#helper function that iterates on the direction
 #where 1 is top left, 2 is top mid, 8 is bottom right, etc.
 def iterate_direction(direction):
 	if direction < 8:
 		direction += 1
-	elif direction == 8:
+	else:
 		direction = 1
 	return direction
 
@@ -492,28 +491,28 @@ def iterate_direction(direction):
 def check_next_tile(x_coord, y_coord, direction):
 	#northwest
 	if direction == 1:
-		color = game_window.get_at((x_coord - 10, y_coord - 10))
+		color = game_window.get_at((x_coord - 15, y_coord - 15))
 	#north
 	elif direction == 2:
-		color = game_window.get_at((x_coord, y_coord - 10))
+		color = game_window.get_at((x_coord - 5, y_coord - 15))
 	#northeast
 	elif direction == 3:
-		color = game_window.get_at((x_coord + 10, y_coord - 10))
+		color = game_window.get_at((x_coord + 5, y_coord - 15))
 	#west
 	elif direction == 4:
-		color = game_window.get_at((x_coord - 10, y_coord))
+		color = game_window.get_at((x_coord - 15, y_coord - 5))
 	#east
 	elif direction == 5:
-		color = game_window.get_at((x_coord + 10, y_coord))
+		color = game_window.get_at((x_coord + 5, y_coord - 5))
 	#southwest
 	elif direction == 6:
-		color = game_window.get_at((x_coord - 10, y_coord + 10))
+		color = game_window.get_at((x_coord - 15, y_coord + 5))
 	#south
 	elif direction == 7:
-		color = game_window.get_at((x_coord, y_coord + 10))
+		color = game_window.get_at((x_coord - 5, y_coord + 5))
 	#southeast
 	elif direction == 8:
-		color = game_window.get_at((x_coord + 10, y_coord + 10))
+		color = game_window.get_at((x_coord + 5, y_coord + 5))
 	return color
 
 #function to get level info. returns ball starting coordinates, end hole coordinates and number of shots for a par.
@@ -552,6 +551,26 @@ def get_info(level_number):
 		return_value[4] = 4
 
 	elif level_number == 4:
+		#start coordinates
+		return_value[0] = 150
+		return_value[1] = window_y - 150
+		#end coordinates
+		return_value[2] = window_x - 150
+		return_value[3] = 175
+		#par value
+		return_value[4] = 4
+
+	elif level_number == 5:
+		#spawn
+		return_value[0] = 180
+		return_value[1] = 150
+		#flag
+		return_value[2] = window_x - 230
+		return_value[3] = window_y - 150
+		#par
+		return_value[4] = 3
+
+	elif level_number == 6:
 		#spawn
 		return_value[0] = window_x - 200
 		return_value[1] = 450
@@ -560,26 +579,110 @@ def get_info(level_number):
 		return_value[3] = window_y - 150
 		#par
 		return_value[4] = 4
+	
+	elif level_number == 7:
+		#spawn
+		return_value[0] = (window_x / 2) + 75
+		return_value[1] = (window_y / 2) - 75
+		#flag
+		return_value[2] = (window_x / 2) - 75
+		return_value[3] = (window_y / 2) - 75
+		#par
+		return_value[4] = 4
+	
+	elif level_number == 8:
+		#spawn
+		return_value[0] = 3 * window_x / 14 - 75
+		return_value[1] = 2.5 * (window_y / 7)  
+		#flag
+		return_value[2] = window_x - 3 * (window_x / 14) + 75
+		return_value[3] = 2.5 * (window_y / 7)
+		#par
+		return_value[4] = 3
+
+	elif level_number == 9:
+		#spawn
+		return_value[0] = 111
+		return_value[1] = 111  
+		#flag
+		return_value[2] = window_x / 2
+		return_value[3] = window_y / 2 - 50
+		#par
+		return_value[4] = 6
+
+	elif level_number == 10:
+		#spawn
+		return_value[0] = window_x / 3 - 100
+		return_value[1] = 5 * (window_y / 8)
+		#flag
+		return_value[2] = 8 * (window_x / 12) + 65
+		return_value[3] = window_y - 275
+		#par
+		return_value[4] = 6
+
 	return return_value
 
-#this funciton draws the walls/tiles of the level
+#this function draws the walls/tiles of the level
 #every loop the field is refreshed with green tiles
 #this draws black (or yellow) tiles where need be
 def draw_walls(level_number):
 	if level_number == 1:
 		pygame.draw.rect(game_window, black, pygame.Rect(0, 0, window_x, window_y / 3))
 		pygame.draw.rect(game_window, black, pygame.Rect(0, 2 * (window_y / 3), window_x, window_y / 3 ))
-	if level_number == 2:
+	elif level_number == 2:
 		pygame.draw.rect(game_window, black, pygame.Rect(0, 0, window_x, window_y / 3))
 		pygame.draw.rect(game_window, black, pygame.Rect(0, 2 * (window_y / 3), window_x, window_y / 3 ))
 		pygame.draw.rect(game_window, yellow, pygame.Rect(4 * window_x / 10, window_y / 3 + (window_y / 12), window_x / 5, window_y / 6 ))
-	if level_number == 3:
+	elif level_number == 3:
 		pygame.draw.rect(game_window, black, pygame.Rect((window_x / 2) - 10, 0, 30, window_y - 250))
-	if level_number == 4:
+	elif level_number == 4:
+		pygame.draw.rect(game_window, black, pygame.Rect(0, 2 * (window_y / 3), 2 * (window_y / 3), 50))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_y / 2, (window_y / 3), 2 * (window_y / 3), 50))
+	elif level_number == 5:
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 3 - 50, window_y / 2, window_x / 9, 50))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 2, window_y / 2, window_x / 9, 50))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 3 - 50, 0, 50, window_y / 2))
+		pygame.draw.rect(game_window, black, pygame.Rect(2 * (window_y / 3) + 50, window_y / 2, 50, window_y / 2))
+		pygame.draw.rect(game_window, yellow, pygame.Rect(window_x / 2, window_y / 6, window_x / 4, window_y / 5))
+	elif level_number == 6:
 		pygame.draw.rect(game_window, black, pygame.Rect((window_x / 3) - 30, window_y / 3, 30, window_y / 3 + 1))
 		pygame.draw.rect(game_window, black, pygame.Rect(2 * (window_x / 3), window_y / 3, 30, window_y / 3 + 1))
 		pygame.draw.rect(game_window, black, pygame.Rect(0, 2 * (window_y / 3), window_x / 3, 30))
 		pygame.draw.rect(game_window, black, pygame.Rect(2 * (window_x / 3), 2 * (window_y / 3), window_x / 3, 30))
+	elif level_number == 7:
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 2 - 20, 0, 40, 3 * (window_y / 4)))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 4, window_y / 2 - 20, window_x / 2, 40))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 4 - 20, window_y / 4, 40, window_y / 4))
+		pygame.draw.rect(game_window, black, pygame.Rect(3 * (window_x / 4) - 20, window_y / 4, 40, window_y / 4))
+	elif level_number == 8:
+		pygame.draw.rect(game_window, black, pygame.Rect(75, 75, window_x, window_y / 7))
+		pygame.draw.rect(game_window, black, pygame.Rect(1.5 * (window_x / 7), 1.5 *(window_y / 7), 4 * (window_x / 7), window_y / 7))
+		pygame.draw.rect(game_window, black, pygame.Rect(2.5 * (window_x / 7), 2.5 *(window_y / 7), 2 * (window_x / 7), window_y / 7))
+		pygame.draw.rect(game_window, black, pygame.Rect(3 * (window_x / 7), 3.5 *(window_y / 7) - 1, 1 * (window_x / 7), window_y / 7))
+		pygame.draw.rect(game_window, black, pygame.Rect(75, window_y - 150, window_x, window_y / 7))
+	elif level_number == 9:
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 6, 5 * (window_y / 7), 4 * (window_x / 6), 50))
+		pygame.draw.rect(game_window, black, pygame.Rect((window_x / 6), 75, 50, 3 * (window_x / 6)))
+		pygame.draw.rect(game_window, black, pygame.Rect(5 * (window_x / 6) - 51, 150, 50, 4 * (window_x / 9)))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 6 + 125, 1.5 * (window_y / 7) - 21, 4 * (window_x / 6) - 125, 50))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 6 + 125, 1.5 * (window_y/ 7) - 21, 50, 3 * (window_x / 9) - 25))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 6 + 125, (window_y / 2) + 25, window_x / 2 - 105, 40))
+		pygame.draw.rect(game_window, black, pygame.Rect(4 * (window_x / 6) - 30, 2 * (window_y / 7) + 50, 50, 3 * (window_x / 9) - 180))
+	elif level_number == 10:
+		pygame.draw.rect(game_window, black, pygame.Rect(0, 3 * (window_y / 4) - 20, window_x / 3 + 20, 40))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 3 - 20, window_y / 2, 40, window_y / 4))
+
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 5 - 7, window_y / 2 - 20, window_y / 5, 40))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 3 - 20, window_y / 2, 40, window_y / 4))
+
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 5 - 20, window_y / 4 + 20, 40, window_y / 4))
+		pygame.draw.rect(game_window, black, pygame.Rect((window_x / 2) - 20, 0, 40, window_y - 150))
+
+		pygame.draw.rect(game_window, yellow, pygame.Rect(window_x / 2 + 100, 150, (window_x / 5) + 50, window_y / 4))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 2 + 150, window_y / 2 + 35, window_y / 5, 40))
+
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 2 + 150, window_y / 2 + 35, 40, window_y / 4 + 100))
+		pygame.draw.rect(game_window, black, pygame.Rect(window_x / 2 + 275, window_y / 2 + 35, 40, window_y / 4 - 50))
 	return
 
 game()
