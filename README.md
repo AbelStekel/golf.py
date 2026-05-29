@@ -14,3 +14,5 @@ potential to do:
 - cap out score at par + 10
 - summate end scores for best/worst runs? like a high score
 - fix some par scores
+- add 'green' -> different green shade for putting (also changes power level)
+- make power gradual? 1- 100 %
